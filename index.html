@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Web Security Labs</title>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a class="on" href="index.html">Home</a>
+    <a href="idor.html">IDOR</a>
+    <a href="upload.html">File Upload</a>
+    <a href="race.html">Race Condition</a>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <p class="meta">Interactive web security labs</p>
+      <h1>Exploit.<br><em>Remediate.</em></h1>
+      <p class="sub">Press a payload, watch the vulnerability work, then switch to the fixed code and press it again.</p>
+      <a class="btn" href="idor.html">Start with IDOR</a>
+      <a class="btn ghost" href="#labs">See all labs</a>
+    </section>
+
+    <section>
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step"><b>1. Read</b>See the vulnerable code.</div>
+        <div class="step"><b>2. Attack</b>Press a payload and watch it work.</div>
+        <div class="step"><b>3. Fix</b>Switch to Fixed. The same payload fails.</div>
+      </div>
+      <p class="note">Everything is a simulation in your browser. Nothing is sent anywhere.</p>
+    </section>
+
+    <section id="labs">
+      <h2>The labs</h2>
+      <a class="lab-row" href="idor.html"><span class="n">01</span><span><b>IDOR</b><small>Change an ID and read another user's data.</small></span><span class="cw">CWE-639 · Easy</span></a>
+      <a class="lab-row" href="upload.html"><span class="n">02</span><span><b>File Upload</b><small>A dangerous file hides behind a harmless extension.</small></span><span class="cw">CWE-434 · Medium</span></a>
+      <a class="lab-row" href="race.html"><span class="n">03</span><span><b>Race Condition</b><small>Two requests at once spend the same money twice.</small></span><span class="cw">CWE-362 · Hard</span></a>
+    </section>
+  </main>
+
+  <footer> 42 Amman &copy; 2026. All rights reserved. </footer>
+</body>
+</html>
