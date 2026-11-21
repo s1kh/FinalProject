@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IDOR</title>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a class="on" href="idor.html">IDOR</a>
+    <a href="upload.html">File Upload</a>
+    <a href="race.html">Race Condition</a>
+  </nav>
+
+  <main>
+    <h1>IDOR</h1>
+
+    <section>
+      <h2>What it is</h2>
+      <p>IDOR means Insecure Direct Object Reference. The app shows data by an ID in the request, but never checks that the data belongs to you. Change the ID, and you read someone else's data.</p>
+      <p>OWASP: A01:2021 Broken Access Control. CWE-639.</p>
+    </section>
+
+    <section>
+      <h2>The line</h2>
+      <pre><code>const invoices = {
+  1001: { owner: "alice", total: "$50" },
+  1002: { owner: "bob",   total: "$75" },
+  1003: { owner: "carol", total: "$120" }
+};
+
+function getInvoice(id) {
+  const inv = invoices[id];
+<span class="bug-line">  return inv;</span>
+}</code></pre>
+      <p>The function only receives the <code>id</code>. It finds the invoice and returns it. It never asks: who is the user, and does this invoice belong to them?</p>
+    </section>
+
+    <section>
+      <h2>Try it</h2>
+      <p>You are logged in as <b>alice</b> (fake user).</p>
+
+      <div class="switch">
+        <button id="btn-vuln" class="active">Vulnerable</button>
+        <button id="btn-fixed">Fixed</button>
+      </div>
+
+      <button data-id="1001">View my invoice (id=1001)</button>
+      <button data-id="1002">Try id=1002</button>
+      <button data-id="1003">Try id=1003</button>
+
+      <div class="urlbar" id="urlbar">/invoice?id=...</div>
+      <div class="result" id="result">Press a button.</div>
+    </section>
+
+    <section>
+      <h2>Why it matters</h2>
+      <p>An attacker can read thousands of private records by counting up the IDs. No hacking tools are needed, only a browser. This can leak invoices, messages, medical files, and addresses.</p>
+      <p>Real incident: Optus (Australia, 2022). Customer data was exposed through an API with predictable IDs.</p>
+    </section>
+
+    <section>
+      <h2>The fix</h2>
+      <pre><code>function getInvoice(id, currentUser) {
+  const inv = invoices[id];
+<span class="fix-line">  if (!inv || inv.owner !== currentUser) return null;</span>
+  return inv;
+}</code></pre>
+      <p>Now the function also receives the user, and checks the owner. The same payload (id=1002) is blocked.</p>
+    </section>
+
+    <section>
+      <h2>Sources</h2>
+      <ul>
+        <li><a href="https://top10.owasp.org/2021/A01_2021-Broken_Access_Control/" target="_blank" rel="noopener noreferrer">OWASP Top 10, A01:2021 Broken Access Control</a></li>
+        <li><a href="https://cwe.mitre.org/data/definitions/639.html" target="_blank" rel="noopener noreferrer">CWE-639: Authorization Bypass Through User-Controlled Key</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>42 Amman &copy; 2026. All rights reserved.</footer>
+
+  <script src="idor.js"></script>
+</body>
+</html>
