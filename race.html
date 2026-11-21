@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Race Condition</title>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="idor.html">IDOR</a>
+    <a href="upload.html">File Upload</a>
+    <a class="on" href="race.html">Race Condition</a>
+  </nav>
+
+  <main>
+    <h1>Race Condition</h1>
+
+    <section>
+      <h2>What it is</h2>
+      <p>A race condition happens when two requests run at the same time and the result depends on who finishes first. The app checks a value, then changes it later. In between, another request sneaks in.</p>
+      <p>OWASP: A04:2021 Insecure Design. CWE-362.</p>
+    </section>
+
+    <section>
+      <h2>The line</h2>
+      <pre><code>let balance = 100;
+
+async function withdraw(amount) {
+  if (balance &gt;= amount) {
+    await sleep(100); // database delay
+<span class="bug-line">    balance -= amount;</span>
+    return "OK";
+  }
+  return "Rejected";
+}</code></pre>
+      <p>The check and the update are two separate steps. During the delay, a second request passes the same check before the first one updates the balance.</p>
+    </section>
+
+    <section>
+      <h2>Try it</h2>
+      <p>The account starts with 100. Every request tries to withdraw 100. Each button starts from a fresh balance. No real money, only a simulation.</p>
+
+      <div class="switch">
+        <button id="btn-vuln" class="active">Vulnerable</button>
+        <button id="btn-fixed">Fixed</button>
+      </div>
+
+      <button data-n="1">1 request</button>
+      <button data-n="2">2 requests at once</button>
+      <button data-n="5">5 requests at once</button>
+
+      <div class="balance" id="balance">Balance: 100</div>
+      <div class="result" id="result">Press a button.</div>
+    </section>
+
+    <section>
+      <h2>Why it matters</h2>
+      <p>Attackers send many requests at the same moment to spend a coupon twice, withdraw more than they own, or redeem a gift card again and again. The code looks correct when you read it. The bug only appears under timing.</p>
+      <p>Real incident: Dirty COW (CVE-2016-5195), a race condition in the Linux kernel that allowed attackers to gain root access.</p>
+    </section>
+
+    <section>
+      <h2>The fix</h2>
+      <pre><code>let locked = false;
+
+async function withdraw(amount) {
+  while (locked) await sleep(10);
+<span class="fix-line">  locked = true;</span>
+  try {
+    if (balance &gt;= amount) {
+      await sleep(100);
+      balance -= amount;
+      return "OK";
+    }
+    return "Rejected";
+  } finally {
+    locked = false;
+  }
+}</code></pre>
+      <p>Now only one request can work at a time. The others wait. The same payload (2 requests at once) is blocked: the second request is rejected. In a real database, use a transaction or an atomic update instead.</p>
+    </section>
+
+    <section>
+      <h2>Sources</h2>
+      <ul>
+        <li><a href="https://cwe.mitre.org/data/definitions/362.html" target="_blank" rel="noopener noreferrer">CWE-362: Concurrent Execution using Shared Resource with Improper Synchronization</a></li>
+        <li><a href="https://cwe.mitre.org/data/definitions/367.html" target="_blank" rel="noopener noreferrer">CWE-367: Time-of-check Time-of-use (TOCTOU) Race Condition</a></li>
+        <li><a href="https://nvd.nist.gov/vuln/detail/CVE-2016-5195" target="_blank" rel="noopener noreferrer">CVE-2016-5195 (Dirty COW)</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>42 Amman &copy; 2026. All rights reserved.</footer>
+
+  <script src="race.js"></script>
+</body>
+</html>
