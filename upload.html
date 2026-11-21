@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unrestricted File Upload</title>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="idor.html">IDOR</a>
+    <a class="on" href="upload.html">File Upload</a>
+    <a href="race.html">Race Condition</a>
+  </nav>
+
+  <main>
+    <h1>Unrestricted File Upload</h1>
+
+    <section>
+      <h2>What it is</h2>
+      <p>A site lets users upload images, but it only checks the file extension. An attacker uploads a dangerous file with a harmless name. If the server stores it and runs it, the attacker controls the server.</p>
+      <p>OWASP: A04:2021 Insecure Design. CWE-434.</p>
+    </section>
+
+    <section>
+      <h2>The line</h2>
+      <pre><code>function upload(file) {
+  // Only allow JPEG images
+  const name = file.name.toLowerCase();
+
+<span class="bug-line">  if (name.endsWith(".jpg")) {</span>
+    save(file);
+    return "Uploaded";
+  }
+
+  return "Rejected";
+}</code></pre>
+      <p>The check trusts the file extension. The attacker chooses the extension, so the check means nothing.</p>
+    </section>
+
+    <section>
+      <h2>Try it</h2>
+      <p>No real upload happens. The files are fake and made in your browser.</p>
+
+      <div class="switch">
+        <button id="btn-vuln" class="active">Vulnerable</button>
+        <button id="btn-fixed">Fixed</button>
+      </div>
+
+      <button data-payload="good">1. photo.jpg (real image)</button>
+      <button data-payload="double">2. shell.php.jpg (disguised)</button>
+      <button data-payload="php">3. shell.php (obvious)</button>
+
+      <div class="result" id="result">Press a button.</div>
+    </section>
+
+    <section>
+      <h2>Why it matters</h2>
+      <p>An uploaded script can give the attacker full control of the server: read data, change pages, attack other users.</p>
+      <p>Real incident: in 2020, the WordPress plugin WP File Manager (CVE-2020-25213) let anyone upload files without logging in. Attackers used it to upload malicious PHP files and run code on the site's server. It was actively exploited in the wild.</p>
+    </section>
+
+    <section>
+      <h2>The fix</h2>
+      <pre><code>async function upload(file) {
+  const head = new Uint8Array(
+    await file.slice(0, 3).arrayBuffer());
+
+<span class="fix-line">  const isJpeg = head[0] === 0xFF &amp;&amp; head[1] === 0xD8 &amp;&amp; head[2] === 0xFF;</span>
+
+  if (isJpeg &amp;&amp; file.size &lt; 1000000) {
+    save(file);
+    return "Uploaded";
+  }
+  return "Rejected";
+}</code></pre>
+      <p>Now the check reads the real bytes. Every JPEG starts with FF D8 FF. The same payload (shell.php.jpg) is rejected.</p>
+      <p>Test the fix: <button id="btn-retest">Run shell.php.jpg on the Fixed version</button></p>
+      <p class="note">On a real server, also rename the file randomly, store it outside the web root, and never run uploaded files.</p>
+    </section>
+
+    <section>
+      <h2>Sources</h2>
+      <ul>
+        <li><a href="https://owasp.org/Top10/A04_2021-Insecure_Design" target="_blank" rel="noopener">OWASP Top 10, A04:2021 Insecure Design</a></li>
+        <li><a href="https://cwe.mitre.org/data/definitions/434.html" target="_blank" rel="noopener">CWE-434: Unrestricted Upload of File with Dangerous Type</a></li>
+        <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html" target="_blank" rel="noopener">OWASP Cheat Sheet: File Upload</a></li>
+        <li><a href="https://www.sonicwall.com/blog/cve-2020-25213-wordpress-plugin-wp-file-manager-actively-being-exploited-in-the-wild" target="_blank" rel="noopener">SonicWall: CVE-2020-25213, WP File Manager exploited in the wild</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>42 Amman © 2026</footer>
+
+  <script src="upload.js"></script>
+</body>
+</html>
